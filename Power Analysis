@@ -1,0 +1,19 @@
+library(simr)
+simdata <- read.csv("simdata.csv", header = TRUE)
+
+## Linear mixed effects model - Target instrument looking
+model1 <- glmer(tilook ~ 1 + cond + (1 + cond|subject) + (1|trial), family = binomial,control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5)),data = simdata)
+summary(model1)
+
+## Specifying an Effect Size
+fixef(model1)["x"] <‐ 2.71  #Based on Ryskin et al. (2017) Exp 2
+
+## Running the Power Analysis
+sim_output <- powerSim(model1, nsim=1000, test = fcompare(tilook~cond))
+sim_output 
+
+## Plotting
+model_plot <- extend(model1, along="cond", n=60)
+p_curve_ <- powerCurve(model_plot, test=fcompare(tilook~cond), along="cond")
+plot(p_curve)
+
