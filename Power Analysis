@@ -1,12 +1,20 @@
 library(simr)
+
+## Load covarites
 simdata <- read.csv("simdata.csv", header = TRUE)
 
-## Linear mixed effects model - Target instrument looking
+## Linear mixed effects model - Target Instrument Looking
 model1 <- glmer(tilook ~ 1 + cond + (1 + cond|subject) + (1|trial), family = binomial,control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5)),data = simdata)
 summary(model1)
 
-## Specifying an Effect Size
-fixef(model1)["x"] <‐ 2.71  #Based on Ryskin et al. (2017) Exp 2
+## Linear mixed effects model - Target Animal Looking
+model2 <- glmer(talook ~ 1 + cond + (1 + cond|subject) + (1|trial), family = binomial,control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5)),data = simdata)
+summary(model2)
+
+=====================================================================
+
+## Specifying an Effect Size ##
+fixef(model1)["x"] <‐ 2.71     #Based on Ryskin et al. (2017) Exp 2
 
 ## Running the Power Analysis
 sim_output <- powerSim(model1, nsim=1000, test = fcompare(tilook~cond))
