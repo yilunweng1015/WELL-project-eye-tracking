@@ -8,7 +8,7 @@ simdata <- subset(simdata0, timewindow == 2)
 
 ## Linear mixed effects model - Target Animal Looking
 model1 <- glmer(talook ~ 1 + cond + (1 + cond|subject) + (1|trial), family = binomial,control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e5)),data = simdata)
-summary(model2)
+summary(model1)
 
 =====================================================================
 
