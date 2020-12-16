@@ -16,11 +16,11 @@ summary(model2)
 fixef(model1)["x"] <‐ 2.17     # Based on Ryskin et al. (2017) Exp2, second time window, t = 2.17
 
 ## Running the Power Analysis
-sim_output <- powerSim(model1, nsim=1000, test = fcompare(tilook~cond))
+sim_output <- powerSim(model1, nsim=1000, test = fcompare(talook~cond))
 sim_output 
 
 ## Plotting
 model_plot <- extend(model1, along="cond", n=60)
-p_curve_ <- powerCurve(model_plot, test=fcompare(tilook~cond), along="cond")
+p_curve_ <- powerCurve(model_plot, test=fcompare(talook~cond), along="cond")
 plot(p_curve)
 
