@@ -1,32 +1,41 @@
 library(simr)
+## Create covarites
+subj <- factor(1:30)
+train <- c("mod", "inst")
+verb <- c("verb1", "verb2", "verb3", "verb4", "verb5", "verb6", "verb7", "verb8")
+testorder <- 1:4
 
-## Load covarites
-simdata0 <- read.csv("simdata.csv", header = TRUE)
+subj_full <- rep(subj, 64)
+train_full <- rep(rep(train, each=2), 480)
+verb_full <- rep(rep(verb, each=120), 2)
+testorder_full <- rep(rep(testorder, each=30), 8)
+covars <- data.frame(subject=subj_full, verb=factor(verb_full), traincond=factor(train_full), testorder=factor(testorder_full))
 
-## Select 2nd time window (Based on Ryskin et al.(2017), Exp2, second time window, Target Animal looking, t = 2.17)
-simdata <- subset(simdata0, timewindow == 2)
-simdata$cond <- as.factor(simdata$cond)
 
-## Intercept and slopes for condition
-fixed <- c(-0.17, -0.12)
-## Random intercepts for participants and trial
-rand <- list(0.4, 0.36)
-## residual variance
+## Specify the parameters for the model:
+## y ~ traincond + testorder + traincond*testorder + (1|subject) + (1|verb)
+#1. Intercept and slopes for training condition, test order, traincondition:testorder
+fixed <- c(0.53, -0.08, 0.14, 0.12, 0.17, 0.12, 0.07, 0.09)
+#2. Random intercepts for participants and verbs
+rand <- list(0.85, 1.77)
+#3. residual variance
 res <- 2
 
-## Linear mixed effect model
-model1 <- makeLmer(talook ~ 1 + cond + (1|subject) + (1|trial), fixef=fixed, VarCorr=rand, sigma=res, data = simdata)
-summary(model1)
-
+## Create model
+model_syn <- makeLmer(y ~ traincond + testorder + traincond*testorder + (1|subject) + (1|verb), fixef=fixed, VarCorr=rand, sigma=res, data = covars)
+summary(model_syn)
 
 ## Specifying an Effect Size ##
-fixef(model1)["condmod"] <- 2.17     # Based on Ryskin et al. (2017) Exp2, second time window, t = 2.17
+fixef(model_syn)["traincondmod:testorder2"] <- 2.17 
 
-## Running the Power Analysis
-sim_output <- powerSim(model1, nsim=100, test = fcompare(talook~cond))
-sim_output 
+## Running the Power Analysis: The effect of test order
+sim_output <- powerSim(model_syn, nsim=100, test = fcompare(y ~ testorder))
 
-## Plotting
-model_plot <- extend(model1, along="subject", n=60)
-p_curve_ <- powerCurve(model_plot, test=fcompare(talook~cond), along="subject")
-plot(p_curve)
+
+## Changing the number of participants
+model_ext_subj <- extend(model_syn, within="traincond+testorder", n=60)
+sim_testorder_subj <- powerSim(model_ext_subj, nsim=100, test = fcompare(y~testorder))
+p_curve_testorder <- powerCurve(model_ext_subj, test=fcompare(y ~ testorder), within="traincond+testorder", breaks=c(10,20,30,40,50,60))
+plot(p_curve_testorder)
+
+
