@@ -58,7 +58,7 @@ summary(model_syn)
 ### Specify an effect size ##
 fixef(model_syn)["traincondmod"] <- 0.2
 
-### Run power analysis for the effect of test order
+### Run power analysis for the effect of training condition
 sim_output <- powerSim(model_syn, nsim=100, test = fcompare(y ~ traincond))
 sim_output
 ```
