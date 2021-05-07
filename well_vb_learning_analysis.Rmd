@@ -1,0 +1,115 @@
+---
+title: "well_vb_learning_analysis"
+author: "Rachel Weng"
+date: "5/6/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Planned analysis
+1.The dependent variable is participants’ eye fixations on a target instrument or a target animal image.
+
+2.The model included random intercepts for participants and items, as well as random by-participant slopes for verb bias condition, time window.
+
+3.A successful replication will be considered to be obtained if we observe there is a significant difference in the proportion of fixations to either the target animal or the target instrument based on training conditions in the second and third time window.
+
+```{r,include=FALSE}
+library(lme4)
+library(lmerTest)
+library(optimx)
+library(Rmisc)
+library(ggplot2)
+library(ggsignif)
+```
+
+```{r, warning=FALSE}
+Data <- read.csv("well_train_firstlook_proportion.csv")
+head(Data)
+```
+
+# Data summary table (N=19)
+```{r, warning=FALSE}
+df <- summarySE(Data, measurevar="mean", groupvars=c("look","cond","cond2"))
+df
+```
+
+# Data visualization: Bar plot
+```{r, warning=FALSE}
+ggplot(df, aes(x=cond, y=mean, fill=look)) + 
+geom_bar(stat="identity", position = "dodge") +
+geom_errorbar(aes(ymin=mean-se, ymax=mean+se), width = 0.1, position = position_dodge(width = 0.9))+
+ylim(0, 0.8)+
+xlab("Testing order") +
+ylab("Percentage of First Fixation (%)") +
+theme_classic(base_size = 14) +
+scale_fill_manual(values=c("#E69F00", "#56B4E9"), guide = guide_legend(title = "Look region"))+
+facet_wrap(cond2 ~ .)
+```
+
+# Linear mixed model
+## 1. Instrument-biased training
+
+### Contrast: Test order 1 vs Test order 2
+```{r, warning=FALSE}
+DataIn <- subset(Data, cond2!="mod_trained")
+my.helmert = matrix(c(-1/2, 1/2, 0), ncol = 1) # Contrast: Test order 1 vs Test order 2
+DataIn$cond <- as.factor(DataIn$cond)
+contrasts(DataIn$cond) = my.helmert
+resultIn <- lmer(mean ~ 1 + cond*look + (1 |subject) , data = DataIn, control = lmerControl(optimizer= "optimx", optCtrl=list(method="nlminb")))
+summary(resultIn)
+```
+
+### Contrast: Test order 1 vs Test order 3
+```{r, warning=FALSE}
+DataIn <- subset(Data, cond2!="mod_trained")
+my.helmert = matrix(c(-1/2, 0, 1/2), ncol = 1) # Contrast: Test order 1 vs Test order 3
+DataIn$cond <- as.factor(DataIn$cond)
+contrasts(DataIn$cond) = my.helmert
+resultIn <- lmer(mean ~ 1 + cond*look + (1|subject), data = DataIn, control = lmerControl(optimizer= "optimx", optCtrl=list(method="nlminb")))
+summary(resultIn)
+```
+
+### Contrast: Test order 2 vs Test order 3
+```{r, warning=FALSE}
+DataIn <- subset(Data, cond2!="mod_trained")
+my.helmert = matrix(c(0, -1/2, 1/2), ncol = 1) # Contrast: Test order 2 vs Test order 3
+DataIn$cond <- as.factor(DataIn$cond)
+contrasts(DataIn$cond) = my.helmert
+resultIn <- lmer(mean ~ 1 + cond*look + (1|subject), data = DataIn, control = lmerControl(optimizer= "optimx", optCtrl=list(method="nlminb")))
+summary(resultIn)
+```
+
+## 2. Modifier-biased training
+
+### Contrast: Test order 1 vs Test order 2
+```{r, warning=FALSE}
+DataAn <- subset(Data, cond2!="inst_trained")
+my.helmert = matrix(c(-1/2, 1/2, 0), ncol = 1) # Contrast: Test order 1 vs Test order 2
+DataAn$cond <- as.factor(DataAn$cond)
+contrasts(DataAn$cond) = my.helmert
+resultAn <- lmer(mean ~ 1 + cond*look + (1|subject), data = DataAn, control = lmerControl(optimizer= "optimx", optCtrl=list(method="nlminb")))
+summary(resultAn)
+```
+
+### Contrast: Test order 1 vs Test order 3
+```{r, warning=FALSE}
+DataAn <- subset(Data, cond2!="inst_trained")
+my.helmert = matrix(c(-1/2, 0, 1/2), ncol = 1) # Contrast: Test order 1 vs Test order 3
+DataAn$cond <- as.factor(DataAn$cond)
+contrasts(DataAn$cond) = my.helmert
+resultAn <- lmer(mean ~ 1 + cond*look + (1|subject), data = DataAn, control = lmerControl(optimizer= "optimx", optCtrl=list(method="nlminb")))
+summary(resultAn)
+```
+
+### Contrast: Test order 2 vs Test order 3
+```{r, warning=FALSE}
+DataAn <- subset(Data, cond2!="inst_trained")
+my.helmert = matrix(c(0, -1/2, 1/2), ncol = 1) # Contrast: Test order 2 vs Test order 3
+DataAn$cond <- as.factor(DataAn$cond)
+contrasts(DataAn$cond) = my.helmert
+resultAn <- lmer(mean ~ 1 + cond*look + (1|subject), data = DataAn, control = lmerControl(optimizer= "optimx", optCtrl=list(method="nlminb")))
+summary(resultAn)
+```
