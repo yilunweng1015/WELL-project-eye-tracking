@@ -1,0 +1,91 @@
+---
+title: "well_sem_prediction_analysis"
+author: "Yi-Lun Weng"
+date: "5/6/2021"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r,include=FALSE,warning=FALSE,message=FALSE}
+library(lme4)
+library(lmerTest)
+library(optimx)
+library(Rmisc)
+library(ggplot2)
+library(ggsignif)
+```
+
+```{r, warning=FALSE}
+Data <- read.csv("well_firstfix_pred_proportion_allsub.csv")
+head(Data)
+```
+
+# Data summary table
+```{r, warning=FALSE}
+df <- summarySE(Data, measurevar="Percentage", groupvars=c("eye_object2","cond"))
+df
+```
+
+# Data visualization: all participants (average)
+```{r, warning=FALSE}
+relev_inst <- subset(df, eye_object2!="irrelevant animal" & eye_object2!="irrelevant instrument" & eye_object2!="relevant animal")
+ggplot(relev_inst, aes(x=eye_object2, y=Percentage, fill=cond)) + 
+geom_bar(stat="identity", position = "dodge") +
+geom_errorbar(aes(ymin=Percentage-se, ymax=Percentage+se), width = 0.1, position = position_dodge(width = 0.9)) +
+ylim(0, 0.35) +
+xlab("Look regions") +
+ylab("Proportion of first fixation (%)") +
+theme_classic(base_size = 10) +
+scale_fill_manual(values=c("#E69F00", "#56B4E9"), guide = guide_legend(title = "Condition")) 
+#facet_wrap(subject ~., ncol=4)
+```
+# Linear mixed model on Relevant Instrument looking (all participants)
+```{r, warning=FALSE}
+Data_relev_inst <- subset(Data, eye_object2!="irrelevant animal" & eye_object2!="irrelevant instrument" & eye_object2!="relevant animal")
+result <- lmer(Percentage ~ 1 + cond + (1|subject), data = Data_relev_inst ,control = lmerControl(calc.derivs = FALSE))
+anova(result)
+```
+
+# Data visualization: individuals
+```{r, warning=FALSE}
+Data_relev_inst <- subset(Data, eye_object2!="irrelevant animal" & eye_object2!="irrelevant instrument" & eye_object2!="relevant animal")
+ggplot(Data_relev_inst, aes(x=eye_object2, y=Percentage, fill=cond)) + 
+geom_bar(stat="identity", position = "dodge") +
+ylim(0, 0.5) +
+xlab(" ") +
+ylab("Proportion of first fixation (%)") +
+theme_classic(base_size = 10) +
+scale_fill_manual(values=c("#E69F00", "#56B4E9"), guide = guide_legend(title = "Condition")) +
+facet_wrap(subject ~., ncol=6)
+```
+
+
+# Data visualization: People who show semantic predictibility
+```{r, warning=FALSE}
+Data_pred <- subset(Data_relev_inst, subject!="well_004" & subject!="well_006" & subject!="well_014" & subject!="well_015" & subject!="well_016" & subject!="well_017" & subject!="well_018" & subject!="well_020" & subject!="well_023" & subject!="well_029" & subject!="well_030" & subject!="well_032" & subject!="well_033" & subject!="well_036" & subject!="well_037" & subject!="well_040")
+
+Data_pred_sum <- summarySE(Data_pred, measurevar="Percentage", groupvars=c("eye_object2","cond"))
+
+ggplot(Data_pred_sum, aes(x=eye_object2, y=Percentage, fill=cond)) + 
+geom_bar(stat="identity", position = "dodge") +
+geom_errorbar(aes(ymin=Percentage-se, ymax=Percentage+se), width = 0.1, position = position_dodge(width = 0.9)) +
+ylim(0, 0.5) +
+xlab("Look region") +
+ylab("Proportion of first fixation (%)") +
+theme_classic(base_size = 10) +
+scale_fill_manual(values=c("#E69F00", "#56B4E9"), guide = guide_legend(title = "Condition"))
+```
+
+# Linear mixed model on Relevant Instrument looking (people who show semantic predictibility)
+```{r, warning=FALSE}
+result <- lmer(Percentage ~ cond + (1|subject), data = Data_pred ,control = lmerControl(calc.derivs = FALSE))
+#summary(result)
+anova(result)
+```
+
+
