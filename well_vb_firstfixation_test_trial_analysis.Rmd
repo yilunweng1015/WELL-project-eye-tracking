@@ -1,0 +1,135 @@
+---
+title: "well_vb_learning_analysis"
+author: "Yi-Lun Weng"
+date: "5/6/2021"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r,include=FALSE}
+library(lme4)
+library(lmerTest)
+library(optimx)
+library(Rmisc)
+library(ggplot2)
+library(ggsignif)
+```
+
+```{r, warning=FALSE}
+Data <- read.csv("well_firstfix_vb_proportion_allsub.csv")
+Data <- Data %>%
+  mutate(cond2 = ifelse(cond == "modtest_1", "Modifier", ifelse(
+    cond == "modtest_2", "Modifier", ifelse(cond == "modtest_3", "Modifier", "Instrument")))) %>%
+  as.data.frame()
+
+Data <- Data %>%
+  mutate(order = 
+    ifelse(cond == "pre_test", "test0",
+    ifelse(cond == "modtest_1", "test1",
+    ifelse(cond == "insttest_1", "test1",
+    ifelse(cond == "modtest_2", "test2", 
+    ifelse(cond == "insttest_2", "test2",
+    ifelse(cond == "modtest_3", "test3", "test3"))))))) %>%
+  as.data.frame()
+```
+
+# First fixation analysis
+# First fixation summary table (all participants)
+```{r, warning=FALSE}
+df0 <- summarySE(Data , measurevar="Percentage", groupvars=c("eye_object2","cond2","order"))
+df0
+```
+
+
+# First fixation plot (all participants)
+```{r, warning=FALSE}
+df <- subset(df0, cond2!="Modifier" & eye_object2!="Animal looks")
+ggplot(df, aes(x=order, y=Percentage)) + 
+geom_bar(stat="identity", position = "dodge") +
+geom_errorbar(aes(ymin=Percentage-se, ymax=Percentage+se), width = 0.1, position = position_dodge(width = 0.9))+
+ylim(0, 0.8)+
+xlab("Testing order") +
+ylab("Proportion of first fixation (%)") +
+theme_classic(base_size = 12) 
+#scale_fill_manual(values=c("#E69F00", "#56B4E9"), guide = guide_legend(title = "Training condition"))
+#facet_wrap(eye_object2 ~ .)
+```
+
+
+# First fixation summary table: People who show semantic predictibility
+```{r, warning=FALSE}
+df_sem <- subset(Data, subject!="well_004" & subject!="well_006" & subject!="well_014" & subject!="well_015" & subject!="well_016" & subject!="well_017" & subject!="well_018" & subject!="well_020" & subject!="well_023" & subject!="well_029" & subject!="well_030" & subject!="well_032" & subject!="well_033" & subject!="well_036" & subject!="well_037" & subject!="well_040")
+
+df_pred <- summarySE(df_sem, measurevar="Percentage", groupvars=c("eye_object2","cond2","order"))
+
+```
+
+# First fixation plot: People who show semantic predictibility
+```{r, warning=FALSE}
+df_pred2 <- subset(df_pred, cond2!="Modifier" & eye_object2!="Animal looks")
+ggplot(df_pred2 , aes(x=order, y=Percentage)) + 
+geom_bar(stat="identity", position = "dodge") +
+geom_errorbar(aes(ymin=Percentage-se, ymax=Percentage+se), width = 0.1, position = position_dodge(width = 0.9))+
+ylim(0, 0.8)+
+xlab("Testing order") +
+ylab("Proportion of first fixation (%)") +
+theme_classic(base_size = 12) 
+```
+
+
+# First fixation summary table: People who do NOT show semantic predictibility
+```{r, warning=FALSE}
+df_sem_no <- subset(Data, subject=="well_004" | subject=="well_006" | subject=="well_014" | subject=="well_015" | subject=="well_016" | subject=="well_017" | subject=="well_018" | subject=="well_020" | subject=="well_023" | subject=="well_029" | subject=="well_030" | subject=="well_032" | subject=="well_033" | subject=="well_036" | subject=="well_037" | subject=="well_040")
+
+df_pred_no <- summarySE(df_sem_no, measurevar="Percentage", groupvars=c("eye_object2","cond2","order"))
+```
+
+# First fixation plot: People who do NOT show semantic predictibility
+```{r, warning=FALSE}
+df_pred_no3 <- subset(df_pred_no, cond2!="Modifier" & eye_object2!="Animal looks")
+ggplot(df_pred_no3, aes(x=order, y=Percentage)) + 
+geom_bar(stat="identity", position = "dodge") +
+geom_errorbar(aes(ymin=Percentage-se, ymax=Percentage+se), width = 0.1, position = position_dodge(width = 0.9)) +
+ylim(0, 0.8) +
+xlab("Testing order") +
+ylab("Proportion of first fixation (%)") +
+theme_classic(base_size = 12) 
+```
+
+
+# First fixation: Linear mixed model (all participants)
+```{r, warning=FALSE}
+Data_inst <- subset(Data, eye_object2!="Animal looks")
+my.helmert = matrix(c(-3/4, 1/4, 1/4, 1/4, 0, -2/3, 1/3, 1/3, 0, 0, -1/2, 1/2), ncol = 3)
+Data_inst$order <- as.factor(Data_inst$order)
+contrasts(Data_inst$order) = my.helmert
+result <- lmer(Percentage ~ 1 + order + cond2 + order*cond2 + (1|subject), data = Data_inst, control = lmerControl(optimizer= "optimx", optCtrl=list(method="nlminb")))
+summary(result)
+```
+
+# First fixation: Linear mixed model (participants who show semantic predictibility)
+```{r, warning=FALSE}
+df_sem1 <- subset(df_sem, eye_object2!="Animal looks")
+my.helmert = matrix(c(-3/4, 1/4, 1/4, 1/4, 0, -2/3, 1/3, 1/3, 0, 0, -1/2, 1/2), ncol = 3)
+df_sem1$order <- as.factor(df_sem1$order)
+contrasts(df_sem1$order) = my.helmert
+result <- lmer(Percentage ~ 1 + order + cond2 + order*cond2 + (1|subject), data = df_sem1, control = lmerControl(optimizer= "optimx", optCtrl=list(method="nlminb")))
+summary(result)
+```
+
+# First fixation: Linear mixed model (participants who do NOT show semantic predictibility)
+```{r, warning=FALSE}
+df_sem_no1 <- subset(df_sem_no, eye_object2!="Animal looks")
+my.helmert = matrix(c(-3/4, 1/4, 1/4, 1/4, 0, -2/3, 1/3, 1/3, 0, 0, -1/2, 1/2), ncol = 3)
+df_sem_no1$order <- as.factor(df_sem_no1$order)
+contrasts(df_sem_no1$order) = my.helmert
+result <- lmer(Percentage ~ 1 + order + cond2 + order*cond2 + (1|subject), data = df_sem_no1, control = lmerControl(optimizer= "optimx", optCtrl=list(method="nlminb")))
+summary(result)
+```
+
