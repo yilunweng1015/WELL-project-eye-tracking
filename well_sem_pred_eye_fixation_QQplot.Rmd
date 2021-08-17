@@ -1,0 +1,40 @@
+---
+title: "Well_sem_pred_overall_eye_fixation_plot"
+author: "Yi-Lun Weng"
+date: "5/12/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, include=FALSE}
+#library(Rmisc)
+library(ggsignif)
+library(ggplot2)
+library(ggpubr)  
+Data <- read.csv("well_eye_fixation_proportion_all.csv")
+Data <- subset(Data, fix_pro_timewindow<3501)
+```
+### 0 ms = Verb onset; 580 ms = N1 onset; 1600 ms = N2 onset
+
+## Relevant instrument region
+```{r, warning=FALSE}
+df <- subset(Data, cond=="unpredictable"|cond=="predictable")
+inst <- subset(df, eye_object!="da" & eye_object!="di" & eye_object!="ta")
+#inst <- subset(df, eye_object2!="irrelevant animal" & eye_object2!="irrelevant instrument" & eye_object2!="relevant animal")
+qplot(y = Percentage, x = fix_pro_timewindow, data = inst, size=I(2), color=cond)+
+  labs(y = "Proportion of fixations on relevant instrument (%)", x = "Time relative to verb onset (0 to 3500ms)")+
+  theme_bw()+
+  geom_smooth()+
+  ylim(0.15, 0.6)+
+  #scale_colour_manual(values = cols)+
+  scale_x_continuous(breaks=seq(0,3500,500))
+  #facet_grid(vars(LookRegion))
+```
+
+
+
+
+
