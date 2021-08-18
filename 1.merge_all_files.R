@@ -32,7 +32,7 @@ preds_minimal <- preds_minimal %>%
 preds_minimal$subject <- c("well_001")
 
 
-#Change trial ID
+#Add trial ID
 preds_minimal$trial<-replace(preds_minimal$trial, preds_minimal$trial==4, 1)
 preds_minimal$trial<-replace(preds_minimal$trial, preds_minimal$trial==6, 2)
 preds_minimal$trial<-replace(preds_minimal$trial, preds_minimal$trial==8, 3)
